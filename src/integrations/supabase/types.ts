@@ -9,7 +9,402 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          class_id: string
+          created_at: string
+          date: string
+          id: string
+          marked_by: string | null
+          status: string | null
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          date: string
+          id?: string
+          marked_by?: string | null
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          marked_by?: string | null
+          status?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_marked_by_fkey"
+            columns: ["marked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_tracking: {
+        Row: {
+          bus_number: string
+          current_latitude: number | null
+          current_longitude: number | null
+          id: string
+          last_updated: string
+          route_name: string
+        }
+        Insert: {
+          bus_number: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          last_updated?: string
+          route_name: string
+        }
+        Update: {
+          bus_number?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          last_updated?: string
+          route_name?: string
+        }
+        Relationships: []
+      }
+      fees: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          fee_type: string
+          id: string
+          payment_date: string | null
+          status: string | null
+          student_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          fee_type: string
+          id?: string
+          payment_date?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          fee_type?: string
+          id?: string
+          payment_date?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          issue_type: string
+          reported_by: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          issue_type: string
+          reported_by?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          issue_type?: string
+          reported_by?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marks: {
+        Row: {
+          created_at: string
+          exam_type: string
+          id: string
+          max_score: number
+          recorded_by: string | null
+          score: number
+          student_id: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          exam_type: string
+          id?: string
+          max_score: number
+          recorded_by?: string | null
+          score: number
+          student_id?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          exam_type?: string
+          id?: string
+          max_score?: number
+          recorded_by?: string | null
+          score?: number
+          student_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marks_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          file_url: string | null
+          id: string
+          subject: string | null
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          file_url?: string | null
+          id?: string
+          subject?: string | null
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          file_url?: string | null
+          id?: string
+          subject?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placements: {
+        Row: {
+          application_link: string | null
+          company_name: string
+          created_at: string
+          deadline: string | null
+          description: string
+          id: string
+          position: string
+          posted_by: string | null
+          requirements: string | null
+          salary_range: string | null
+        }
+        Insert: {
+          application_link?: string | null
+          company_name: string
+          created_at?: string
+          deadline?: string | null
+          description: string
+          id?: string
+          position: string
+          posted_by?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+        }
+        Update: {
+          application_link?: string | null
+          company_name?: string
+          created_at?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          position?: string
+          posted_by?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placements_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      syllabus: {
+        Row: {
+          content: string
+          course: string
+          created_at: string
+          id: string
+          subject: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          content: string
+          course: string
+          created_at?: string
+          id?: string
+          subject: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          content?: string
+          course?: string
+          created_at?: string
+          id?: string
+          subject?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syllabus_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
