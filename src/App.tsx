@@ -24,6 +24,7 @@ import ReportIssuePage from "./pages/report";
 import UserManagementPage from "./pages/users";
 import SettingsPage from "./pages/settings";
 import CreateEventPage from "./pages/events/create";
+import MorePage from "./pages/more";
 
 const queryClient = new QueryClient();
 
@@ -70,21 +71,72 @@ const App = () => (
             }
           />
 
-          {/* Feature Routes */}
-          <Route path="/attendance" element={<AttendancePage />} />
-          <Route path="/marks" element={<MarksPage />} />
-          <Route path="/fees" element={<FeesPage />} />
-          <Route path="/syllabus" element={<SyllabusPage />} />
-          <Route path="/bus-tracking" element={<BusTrackingPage />} />
-          <Route path="/placements" element={<PlacementsPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/notes" element={<NotesPage />} />
-          <Route path="/report" element={<ReportIssuePage />} />
-          <Route path="/users" element={<UserManagementPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          
-          {/* Event Management */}
-          <Route path="/events/create" element={<CreateEventPage />} />
+          {/* Feature Routes - Wrap all in appropriate DashboardLayout */}
+          <Route path="/attendance" element={
+            <DashboardLayout userType="student">
+              <AttendancePage />
+            </DashboardLayout>
+          } />
+          <Route path="/marks" element={
+            <DashboardLayout userType="student">
+              <MarksPage />
+            </DashboardLayout>
+          } />
+          <Route path="/fees" element={
+            <DashboardLayout userType="student">
+              <FeesPage />
+            </DashboardLayout>
+          } />
+          <Route path="/syllabus" element={
+            <DashboardLayout userType="student">
+              <SyllabusPage />
+            </DashboardLayout>
+          } />
+          <Route path="/bus-tracking" element={
+            <DashboardLayout userType="student">
+              <BusTrackingPage />
+            </DashboardLayout>
+          } />
+          <Route path="/placements" element={
+            <DashboardLayout userType="student">
+              <PlacementsPage />
+            </DashboardLayout>
+          } />
+          <Route path="/notifications" element={
+            <DashboardLayout userType="student">
+              <NotificationsPage />
+            </DashboardLayout>
+          } />
+          <Route path="/notes" element={
+            <DashboardLayout userType="student">
+              <NotesPage />
+            </DashboardLayout>
+          } />
+          <Route path="/report" element={
+            <DashboardLayout userType="student">
+              <ReportIssuePage />
+            </DashboardLayout>
+          } />
+          <Route path="/users" element={
+            <DashboardLayout userType="admin">
+              <UserManagementPage />
+            </DashboardLayout>
+          } />
+          <Route path="/settings" element={
+            <DashboardLayout userType="student">
+              <SettingsPage />
+            </DashboardLayout>
+          } />
+          <Route path="/events/create" element={
+            <DashboardLayout userType="faculty">
+              <CreateEventPage />
+            </DashboardLayout>
+          } />
+          <Route path="/more" element={
+            <DashboardLayout userType="student">
+              <MorePage />
+            </DashboardLayout>
+          } />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
