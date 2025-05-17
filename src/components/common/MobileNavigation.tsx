@@ -5,10 +5,7 @@ import {
   LayoutDashboard, 
   CalendarDays, 
   BookOpen, 
-  User, 
-  CreditCard, 
   Bell, 
-  Settings,
   Menu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -62,7 +59,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ userType }) => {
   );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 shadow-lg">
       <div className="flex justify-around items-center h-16">
         {filteredItems.map((item, index) => {
           const isActive = pathName === item.href || 
@@ -73,12 +70,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ userType }) => {
               key={index}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-full px-1",
-                isActive ? "text-college-primary" : "text-gray-500"
+                "flex flex-col items-center justify-center w-full h-full px-1 transition-all duration-200",
+                isActive 
+                  ? "text-college-primary transform scale-105" 
+                  : "text-gray-500 hover:text-gray-700"
               )}
             >
               <div className={cn(
-                "rounded-full p-1",
+                "rounded-full p-1 transition-all duration-200",
                 isActive ? "bg-college-primary/10" : ""
               )}>
                 {item.icon}

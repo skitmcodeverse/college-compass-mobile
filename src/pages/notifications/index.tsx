@@ -1,14 +1,13 @@
 
-import React from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import React, { useState } from 'react';
 import PageTitle from '@/components/common/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Check, X, Calendar, Book, Users, Bus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 const NotificationsPage: React.FC = () => {
-  // Mock data for now - would be connected to Supabase
-  const notifications = [
+  const [notifications, setNotifications] = useState([
     {
       id: 1,
       title: 'Class Schedule Change',
@@ -57,7 +56,24 @@ const NotificationsPage: React.FC = () => {
       isRead: true,
       category: 'exam'
     }
-  ];
+  ]);
+
+  // Function to mark notification as read
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map(notification => 
+      notification.id === id ? { ...notification, isRead: true } : notification
+    ));
+  };
+
+  // Function to mark all notifications as read
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notification => ({ ...notification, isRead: true })));
+  };
+
+  // Function to delete notification
+  const deleteNotification = (id: number) => {
+    setNotifications(notifications.filter(notification => notification.id !== id));
+  };
 
   // Function to get the appropriate icon for each notification category
   const getCategoryIcon = (category: string) => {
@@ -93,14 +109,29 @@ const NotificationsPage: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+
   return (
-    <DashboardLayout userType="student">
+    <>
       <PageTitle 
         title="Notifications" 
         description="Stay updated with college announcements and alerts"
       />
       
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <div className="flex items-center">
           <span className="bg-college-primary text-white text-xs font-medium px-2.5 py-1 rounded-full mr-2">
             {unreadCount}
@@ -108,61 +139,99 @@ const NotificationsPage: React.FC = () => {
           <span className="text-sm text-gray-500">Unread notifications</span>
         </div>
         
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Check className="h-4 w-4 mr-1" /> Mark all as read
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={markAllAsRead} 
+            disabled={unreadCount === 0}
+            className="flex-1 sm:flex-initial justify-center"
+          >
+            <Check className="h-4 w-4 mr-1" /> Mark all read
           </Button>
-          <Button variant="outline" size="sm">
-            <Bell className="h-4 w-4 mr-1" /> Notification settings
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex-1 sm:flex-initial justify-center"
+          >
+            <Bell className="h-4 w-4 mr-1" /> Settings
           </Button>
         </div>
       </div>
       
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-lg">
             <Bell className="h-5 w-5 mr-2 text-college-primary" />
             All Notifications
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div 
-                key={notification.id} 
-                className={`p-4 border rounded-lg flex gap-4 ${
-                  !notification.isRead ? 'bg-blue-50 border-blue-200' : ''
-                }`}
-              >
-                <div className="mt-1">
-                  {getCategoryIcon(notification.category)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold">{notification.title}</h3>
-                    {!notification.isRead && (
-                      <span className="bg-blue-500 h-2 w-2 rounded-full"></span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                  <div className="text-xs text-gray-500 mt-2">{formatTimestamp(notification.timestamp)}</div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Mark as read</span>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Delete</span>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+          <motion.div 
+            className="space-y-3"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            {notifications.length === 0 ? (
+              <div className="text-center py-8">
+                <Bell className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                <p className="text-gray-500">No notifications to display</p>
               </div>
-            ))}
-          </div>
+            ) : (
+              notifications.map((notification) => (
+                <motion.div 
+                  key={notification.id} 
+                  className={`p-3 border rounded-lg flex gap-3 transition-all duration-200 ${
+                    !notification.isRead ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                  }`}
+                  variants={item}
+                  whileHover={{ scale: 1.01 }}
+                >
+                  <div className="mt-1 flex-shrink-0">
+                    {getCategoryIcon(notification.category)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium text-sm sm:text-base truncate pr-2">
+                        {notification.title}
+                      </h3>
+                      {!notification.isRead && (
+                        <span className="bg-blue-500 h-2 w-2 rounded-full flex-shrink-0"></span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{notification.message}</p>
+                    <div className="text-xs text-gray-500 mt-2">{formatTimestamp(notification.timestamp)}</div>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    {!notification.isRead && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <span className="sr-only">Mark as read</span>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => deleteNotification(notification.id)}
+                    >
+                      <span className="sr-only">Delete</span>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </motion.div>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 };
 

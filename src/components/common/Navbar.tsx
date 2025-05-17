@@ -37,15 +37,15 @@ const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
     <header className="bg-white border-b border-gray-200 fixed w-full top-0 z-30">
       <div className="px-4 md:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          {toggleSidebar && (
+          {toggleSidebar && !isMobile && (
             <Button 
               variant="ghost" 
               size="icon" 
               className="mr-2" 
               onClick={toggleSidebar}
+              aria-label="Toggle sidebar"
             >
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle sidebar</span>
             </Button>
           )}
           
@@ -54,7 +54,7 @@ const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
           </Link>
         </div>
 
-        <div className="flex items-center space-x-1 md:space-x-4">
+        <div className="flex items-center gap-1 md:gap-4">
           {isSearchOpen && !isMobile ? (
             <div className="relative">
               <input 
@@ -74,30 +74,29 @@ const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
               variant="ghost"
               size="icon"
               onClick={() => setIsSearchOpen(true)}
+              className="hidden md:inline-flex"
+              aria-label="Search"
             >
               <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
             </Button>
           )}
 
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              asChild
-            >
-              <Link to="/notifications">
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 text-xs flex items-center justify-center bg-college-danger text-white rounded-full">
-                    {notificationCount}
-                  </span>
-                )}
-                <span className="sr-only">Notifications</span>
-              </Link>
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            asChild
+          >
+            <Link to="/notifications">
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute top-0 right-0 h-4 w-4 text-xs flex items-center justify-center bg-college-danger text-white rounded-full">
+                  {notificationCount}
+                </span>
+              )}
+              <span className="sr-only">Notifications</span>
+            </Link>
+          </Button>
 
           {userType ? (
             <DropdownMenu>
@@ -105,7 +104,7 @@ const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="rounded-full h-8 w-8 bg-college-primary text-white"
+                  className="rounded-full h-8 w-8 bg-college-primary text-white transition-transform hover:scale-105"
                 >
                   {userName.charAt(0)}
                 </Button>
