@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginForm from "./components/auth/LoginForm";
@@ -25,7 +25,29 @@ import UserManagementPage from "./pages/users";
 import SettingsPage from "./pages/settings";
 import CreateEventPage from "./pages/events/create";
 import MorePage from "./pages/more";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+// Route guard component
+const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children: JSX.Element }) => {
+  // Check if user is logged in and has the correct type
+  const storedUser = localStorage.getItem('educonnect_user');
+  
+  if (!storedUser) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  try {
+    const userData = JSON.parse(storedUser);
+    if (userTypes.includes(userData.role)) {
+      return children;
+    } else {
+      // If logged in but wrong role, redirect to their correct dashboard
+      return <Navigate to={`/dashboard/${userData.role}`} replace />;
+    }
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+};
 
 const App = () => {
   // Initialize QueryClient inside the component
@@ -48,9 +70,11 @@ const App = () => {
             <Route
               path="/dashboard/student"
               element={
-                <DashboardLayout userType="student">
-                  <StudentDashboard />
-                </DashboardLayout>
+                <ProtectedRoute userTypes={["student"]}>
+                  <DashboardLayout userType="student">
+                    <StudentDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
               }
             />
             
@@ -58,9 +82,11 @@ const App = () => {
             <Route
               path="/dashboard/faculty"
               element={
-                <DashboardLayout userType="faculty">
-                  <FacultyDashboard />
-                </DashboardLayout>
+                <ProtectedRoute userTypes={["faculty"]}>
+                  <DashboardLayout userType="faculty">
+                    <FacultyDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
               }
             />
             
@@ -68,77 +94,105 @@ const App = () => {
             <Route
               path="/dashboard/admin"
               element={
-                <DashboardLayout userType="admin">
-                  <AdminDashboard />
-                </DashboardLayout>
+                <ProtectedRoute userTypes={["admin"]}>
+                  <DashboardLayout userType="admin">
+                    <AdminDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
               }
             />
 
-            {/* Feature Routes - Wrap all in appropriate DashboardLayout */}
+            {/* Feature Routes - Wrap all in appropriate DashboardLayout with protection */}
             <Route path="/attendance" element={
-              <DashboardLayout userType="student">
-                <AttendancePage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty"]}>
+                <DashboardLayout userType="student">
+                  <AttendancePage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/marks" element={
-              <DashboardLayout userType="student">
-                <MarksPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty"]}>
+                <DashboardLayout userType="student">
+                  <MarksPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/fees" element={
-              <DashboardLayout userType="student">
-                <FeesPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "admin"]}>
+                <DashboardLayout userType="student">
+                  <FeesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/syllabus" element={
-              <DashboardLayout userType="student">
-                <SyllabusPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <SyllabusPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/bus-tracking" element={
-              <DashboardLayout userType="student">
-                <BusTrackingPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <BusTrackingPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/placements" element={
-              <DashboardLayout userType="student">
-                <PlacementsPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <PlacementsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/notifications" element={
-              <DashboardLayout userType="student">
-                <NotificationsPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <NotificationsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/notes" element={
-              <DashboardLayout userType="student">
-                <NotesPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <NotesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/report" element={
-              <DashboardLayout userType="student">
-                <ReportIssuePage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <ReportIssuePage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/users" element={
-              <DashboardLayout userType="admin">
-                <UserManagementPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["admin"]}>
+                <DashboardLayout userType="admin">
+                  <UserManagementPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/settings" element={
-              <DashboardLayout userType="student">
-                <SettingsPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <SettingsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/events/create" element={
-              <DashboardLayout userType="faculty">
-                <CreateEventPage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["faculty", "admin"]}>
+                <DashboardLayout userType="faculty">
+                  <CreateEventPage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             <Route path="/more" element={
-              <DashboardLayout userType="student">
-                <MorePage />
-              </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <DashboardLayout userType="student">
+                  <MorePage />
+                </DashboardLayout>
+              </ProtectedRoute>
             } />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

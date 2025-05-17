@@ -7,30 +7,26 @@ const DashboardRedirect: React.FC = () => {
   const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // In a production app, fetch the user type from Supabase
   useEffect(() => {
-    async function getUserType() {
+    // Check if user is logged in via localStorage (our current mock implementation)
+    const getUserType = () => {
       try {
-        // Check if user is authenticated
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        const storedUser = localStorage.getItem('educonnect_user');
         
-        if (authError || !session) {
-          // Not authenticated, redirect to login
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          setUserType(userData.role);
+        } else {
           setUserType(null);
-          setLoading(false);
-          return;
         }
         
-        // For testing purposes, we'll use a mock value
-        // In a real app, you would fetch this from the profiles table
-        setUserType('student'); // Mock value - replace with actual DB query
         setLoading(false);
       } catch (error) {
         console.error('Error getting user type:', error);
         setUserType(null);
         setLoading(false);
       }
-    }
+    };
     
     getUserType();
   }, []);
@@ -52,7 +48,7 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/dashboard/admin" replace />;
   }
   
-  // If not authenticated or role not determined, redirect to login
+  // If not authenticated, redirect to login
   return <Navigate to="/login" replace />;
 };
 

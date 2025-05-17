@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username is required" }),
@@ -56,22 +57,34 @@ const LoginForm = () => {
     setIsLoading(true);
     console.log("Login attempt:", values);
     
+    // Authentication credentials as requested
+    const mockCredentials = {
+      student: { username: "student", password: "student@123" },
+      faculty: { username: "faculty", password: "faculty@123" },
+      admin: { username: "admin", password: "admin@123" },
+    };
+    
+    // Get credentials for the selected user type
+    const userCredentials = mockCredentials[values.userType];
+    
+    // Case-insensitive username comparison, but case-sensitive password
+    const isUsernameMatch = values.username.toLowerCase() === userCredentials.username.toLowerCase();
+    const isPasswordMatch = values.password === userCredentials.password;
+    
     // Simulate authentication delay
     setTimeout(() => {
       setIsLoading(false);
       
-      // Mock authentication logic 
-      // In a real application, this would be replaced with actual authentication
-      const mockCredentials = {
-        student: { username: "student", password: "password" },
-        faculty: { username: "faculty", password: "password" },
-        admin: { username: "admin", password: "password" },
-      };
-      
-      const userCredentials = mockCredentials[values.userType];
-      
-      if (values.username === userCredentials.username && 
-          values.password === userCredentials.password) {
+      if (isUsernameMatch && isPasswordMatch) {
+        // Store user info in localStorage for persistence
+        const userData = {
+          id: `mock-${values.userType}-id`,
+          username: values.username,
+          role: values.userType
+        };
+        
+        localStorage.setItem('educonnect_user', JSON.stringify(userData));
+        
         toast.success("Login successful!");
         navigate(`/dashboard/${values.userType}`);
       } else {
@@ -163,7 +176,12 @@ const LoginForm = () => {
           </a>
         </div>
         <div className="text-xs text-center text-gray-500">
-          Having trouble? Contact support at support@educonnect.edu
+          <p>
+            Test credentials:<br/>
+            Student: username: "student", password: "student@123"<br/>
+            Faculty: username: "faculty", password: "faculty@123"<br/>
+            Admin: username: "admin", password: "admin@123"
+          </p>
         </div>
       </CardFooter>
     </Card>
