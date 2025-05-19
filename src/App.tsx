@@ -25,7 +25,7 @@ import UserManagementPage from "./pages/users";
 import SettingsPage from "./pages/settings";
 import CreateEventPage from "./pages/events/create";
 import MorePage from "./pages/more";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // Route guard component
 const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children: JSX.Element }) => {
@@ -102,28 +102,32 @@ const App = () => {
               }
             />
 
-            {/* Feature Routes - Wrap all in appropriate DashboardLayout with protection */}
+            {/* Feature Routes - Each with appropriate role restrictions */}
             <Route path="/attendance" element={
-              <ProtectedRoute userTypes={["student", "faculty"]}>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
                   <AttendancePage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/marks" element={
-              <ProtectedRoute userTypes={["student", "faculty"]}>
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
                   <MarksPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
+            {/* Only students can access fees page */}
             <Route path="/fees" element={
-              <ProtectedRoute userTypes={["student", "admin"]}>
+              <ProtectedRoute userTypes={["student"]}>
                 <DashboardLayout userType="student">
                   <FeesPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/syllabus" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -131,13 +135,16 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
+            {/* Students and admin can access bus tracking */}
             <Route path="/bus-tracking" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+              <ProtectedRoute userTypes={["student", "admin"]}>
                 <DashboardLayout userType="student">
                   <BusTrackingPage />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/placements" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -145,6 +152,7 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/notifications" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -152,6 +160,7 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/notes" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -159,6 +168,7 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/report" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -166,6 +176,8 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
+            {/* Only admins can access user management */}
             <Route path="/users" element={
               <ProtectedRoute userTypes={["admin"]}>
                 <DashboardLayout userType="admin">
@@ -173,6 +185,8 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
+            {/* Settings available to all users */}
             <Route path="/settings" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -180,6 +194,8 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
+            {/* Only faculty and admin can create events */}
             <Route path="/events/create" element={
               <ProtectedRoute userTypes={["faculty", "admin"]}>
                 <DashboardLayout userType="faculty">
@@ -187,6 +203,7 @@ const App = () => {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/more" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
                 <DashboardLayout userType="student">
@@ -195,7 +212,7 @@ const App = () => {
               </ProtectedRoute>
             } />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

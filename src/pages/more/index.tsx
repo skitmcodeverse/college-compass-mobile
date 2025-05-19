@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -42,7 +42,7 @@ const allNavigationItems = [
     icon: <CreditCard className="h-5 w-5" />,
     label: "Fees",
     href: "/fees",
-    roles: ['student', 'admin'],
+    roles: ['student'], // Only students can see fees
   },
   {
     icon: <BookOpen className="h-5 w-5" />,
@@ -54,7 +54,7 @@ const allNavigationItems = [
     icon: <Bus className="h-5 w-5" />,
     label: "Bus Tracking",
     href: "/bus-tracking",
-    roles: ['student', 'admin'],
+    roles: ['student', 'admin'], // Only students and admins can access bus tracking
   },
   {
     icon: <Briefcase className="h-5 w-5" />,
@@ -84,7 +84,7 @@ const allNavigationItems = [
     icon: <User className="h-5 w-5" />,
     label: "User Management",
     href: "/users",
-    roles: ['admin'],
+    roles: ['admin'], // Only admins can manage users
   },
   {
     icon: <Settings className="h-5 w-5" />,
@@ -95,10 +95,25 @@ const allNavigationItems = [
 ];
 
 const MorePage: React.FC = () => {
-  // In a real app, you would check the authenticated user's role
-  // For now, we'll use a mock value
-  const userType = 'student'; // This would be dynamic based on authentication
+  const [userType, setUserType] = useState<string>('student');
   const navigate = useNavigate();
+  
+  // Get user role from localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('educonnect_user');
+    
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUserType(userData.role);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        navigate('/login');
+      }
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
   
   // Filter items by role
   const filteredItems = allNavigationItems.filter(item => 
@@ -112,14 +127,14 @@ const MorePage: React.FC = () => {
         description="Access all features of EduConnect"
       />
       
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {filteredItems.map((item, index) => (
           <Link 
             key={index} 
             to={item.href}
             className="no-underline"
           >
-            <Card className="flex flex-col items-center justify-center p-4 hover:bg-gray-50 transition-colors">
+            <Card className="flex flex-col items-center justify-center p-4 hover:bg-gray-50 transition-colors h-full">
               <div className="rounded-full bg-college-primary/10 p-3 mb-2 text-college-primary">
                 {item.icon}
               </div>

@@ -57,10 +57,10 @@ const LoginForm = () => {
     setIsLoading(true);
     console.log("Login attempt:", values);
     
-    // Authentication credentials as requested
+    // Authentication credentials with updated requirements
     const mockCredentials = {
       student: { username: "student", password: "student@123" },
-      faculty: { username: "faculty", password: "faculty@123" },
+      faculty: { username: "Faculty", password: "faculty@123" },
       admin: { username: "admin", password: "admin@123" },
     };
     
@@ -179,7 +179,7 @@ const LoginForm = () => {
           <p>
             Test credentials:<br/>
             Student: username: "student", password: "student@123"<br/>
-            Faculty: username: "faculty", password: "faculty@123"<br/>
+            Faculty: username: "Faculty", password: "faculty@123"<br/>
             Admin: username: "admin", password: "admin@123"
           </p>
         </div>

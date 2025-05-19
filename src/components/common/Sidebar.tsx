@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
     title: 'Fees',
     href: '/fees',
     icon: <CreditCard className="h-5 w-5" />,
-    roles: ['student', 'admin'],
+    roles: ['student'], // Only students can see fees
   },
   {
     title: 'Syllabus',
@@ -64,7 +64,7 @@ const navItems: NavItem[] = [
     title: 'Bus Tracking',
     href: '/bus-tracking',
     icon: <Bus className="h-5 w-5" />,
-    roles: ['student', 'admin'],
+    roles: ['student', 'admin'], // Only students and admins can see bus tracking
   },
   {
     title: 'Placements',
@@ -94,13 +94,13 @@ const navItems: NavItem[] = [
     title: 'User Management',
     href: '/users',
     icon: <User className="h-5 w-5" />,
-    roles: ['admin'],
+    roles: ['admin'], // Only admins can manage users
   },
   {
     title: 'Settings',
     href: '/settings',
     icon: <Settings className="h-5 w-5" />,
-    roles: ['admin'],
+    roles: ['student', 'faculty', 'admin'],
   },
 ];
 
