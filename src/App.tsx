@@ -1,6 +1,6 @@
 
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -29,7 +29,6 @@ import { useState } from "react";
 
 // Route guard component
 const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children: JSX.Element }) => {
-  // Check if user is logged in and has the correct type
   const storedUser = localStorage.getItem('educonnect_user');
   
   if (!storedUser) {
@@ -41,7 +40,6 @@ const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children
     if (userTypes.includes(userData.role)) {
       return children;
     } else {
-      // If logged in but wrong role, redirect to their correct dashboard
       return <Navigate to={`/dashboard/${userData.role}`} replace />;
     }
   } catch {
@@ -49,8 +47,26 @@ const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children
   }
 };
 
+// Helper to get user type for dynamic layout
+const getDynamicLayout = (allowedRoles: string[], children: React.ReactNode) => {
+  const storedUser = localStorage.getItem('educonnect_user');
+  if (!storedUser) return <Navigate to="/login" replace />;
+  
+  try {
+    const userData = JSON.parse(storedUser);
+    const userType = userData.role as 'student' | 'faculty' | 'admin';
+    
+    return (
+      <DashboardLayout userType={userType}>
+        {children}
+      </DashboardLayout>
+    );
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+};
+
 const App = () => {
-  // Initialize QueryClient inside the component
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -102,82 +118,70 @@ const App = () => {
               }
             />
 
-            {/* Feature Routes - Each with appropriate role restrictions */}
+            {/* Attendance - All roles */}
             <Route path="/attendance" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <AttendancePage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <AttendancePage />)}
               </ProtectedRoute>
             } />
             
+            {/* Marks - All roles */}
             <Route path="/marks" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <MarksPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <MarksPage />)}
               </ProtectedRoute>
             } />
             
-            {/* Only students can access fees page */}
+            {/* Fees - Students and Admin only */}
             <Route path="/fees" element={
-              <ProtectedRoute userTypes={["student"]}>
-                <DashboardLayout userType="student">
-                  <FeesPage />
-                </DashboardLayout>
+              <ProtectedRoute userTypes={["student", "admin"]}>
+                {getDynamicLayout(["student", "admin"], <FeesPage />)}
               </ProtectedRoute>
             } />
             
+            {/* Syllabus - All roles */}
             <Route path="/syllabus" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <SyllabusPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <SyllabusPage />)}
               </ProtectedRoute>
             } />
             
-            {/* Students and admin can access bus tracking */}
+            {/* Bus Tracking - Students and Admin only */}
             <Route path="/bus-tracking" element={
               <ProtectedRoute userTypes={["student", "admin"]}>
-                <DashboardLayout userType="student">
-                  <BusTrackingPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "admin"], <BusTrackingPage />)}
               </ProtectedRoute>
             } />
             
+            {/* Placements - All roles */}
             <Route path="/placements" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <PlacementsPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <PlacementsPage />)}
               </ProtectedRoute>
             } />
             
+            {/* Notifications - All roles */}
             <Route path="/notifications" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <NotificationsPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <NotificationsPage />)}
               </ProtectedRoute>
             } />
             
+            {/* Notes - All roles */}
             <Route path="/notes" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <NotesPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <NotesPage />)}
               </ProtectedRoute>
             } />
             
+            {/* Report Issue - All roles */}
             <Route path="/report" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <ReportIssuePage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <ReportIssuePage />)}
               </ProtectedRoute>
             } />
             
-            {/* Only admins can access user management */}
+            {/* User Management - Admin only */}
             <Route path="/users" element={
               <ProtectedRoute userTypes={["admin"]}>
                 <DashboardLayout userType="admin">
@@ -186,29 +190,24 @@ const App = () => {
               </ProtectedRoute>
             } />
             
-            {/* Settings available to all users */}
+            {/* Settings - All roles */}
             <Route path="/settings" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <SettingsPage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <SettingsPage />)}
               </ProtectedRoute>
             } />
             
-            {/* Only faculty and admin can create events */}
+            {/* Create Event - Faculty and Admin only */}
             <Route path="/events/create" element={
               <ProtectedRoute userTypes={["faculty", "admin"]}>
-                <DashboardLayout userType="faculty">
-                  <CreateEventPage />
-                </DashboardLayout>
+                {getDynamicLayout(["faculty", "admin"], <CreateEventPage />)}
               </ProtectedRoute>
             } />
             
+            {/* More Page - All roles */}
             <Route path="/more" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DashboardLayout userType="student">
-                  <MorePage />
-                </DashboardLayout>
+                {getDynamicLayout(["student", "faculty", "admin"], <MorePage />)}
               </ProtectedRoute>
             } />
             

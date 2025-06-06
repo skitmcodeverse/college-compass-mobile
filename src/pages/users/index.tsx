@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import PageTitle from '@/components/common/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,7 +66,7 @@ const UserManagementPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout userType="admin">
+    <div className="space-y-6 animate-fade-in">
       <PageTitle 
         title="User Management" 
         description="Add, edit, and manage users in the system"
@@ -236,7 +235,7 @@ const UserManagementPage: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </div>
   );
 };
 
