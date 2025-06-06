@@ -2,8 +2,9 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Download, Smartphone, Wifi, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import InstallPWA from '@/components/pwa/InstallPWA';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,48 @@ const Index: React.FC = () => {
                 Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+          </div>
+        </div>
+
+        {/* PWA Features Section */}
+        <div className="mt-12 max-w-md mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-college-primary/10">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-college-primary rounded-full flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-college-primary">📱 Install as App</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Install EduConnect on your device for the best experience!
+            </p>
+            
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Wifi className="w-4 h-4 text-green-600" />
+                </div>
+                <span className="text-xs text-gray-600">Offline Access</span>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Download className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-xs text-gray-600">Quick Install</span>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Lock className="w-4 h-4 text-purple-600" />
+                </div>
+                <span className="text-xs text-gray-600">Secure</span>
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+              <strong>How to install:</strong><br/>
+              📱 On mobile: Tap "Add to Home Screen" in your browser menu<br/>
+              💻 On desktop: Look for the install icon in your address bar
+            </div>
           </div>
         </div>
 
@@ -95,9 +138,12 @@ const Index: React.FC = () => {
       <footer className="bg-white p-4 border-t">
         <div className="container mx-auto text-center text-sm text-gray-500">
           <p>© 2025 EduConnect. All rights reserved.</p>
-          <p className="mt-1">A mobile-first college management app</p>
+          <p className="mt-1">A mobile-first college management app • Install as PWA for best experience 🚀</p>
         </div>
       </footer>
+
+      {/* PWA Install Banner */}
+      <InstallPWA />
     </div>
   );
 };
