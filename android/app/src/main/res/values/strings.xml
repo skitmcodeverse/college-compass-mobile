@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">college-compass-mobile</string>
+    <string name="title_activity_main">college-compass-mobile</string>
+    <string name="package_name">app.lovable.df95e9c254e64fa390b783e89055b20e</string>
+    <string name="custom_url_scheme">app.lovable.df95e9c254e64fa390b783e89055b20e</string>
+</resources>
