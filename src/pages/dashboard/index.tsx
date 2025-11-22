@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,27 +7,39 @@ const DashboardRedirect: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in via localStorage (our current mock implementation)
-    const getUserType = () => {
+    const checkAuth = async () => {
       try {
-        const storedUser = localStorage.getItem('educonnect_user');
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          setUserType(userData.role);
-        } else {
+        if (!session) {
           setUserType(null);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch user role
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error || !roleData) {
+          console.error('Error fetching role:', error);
+          setUserType(null);
+        } else {
+          setUserType(roleData.role);
         }
         
         setLoading(false);
       } catch (error) {
-        console.error('Error getting user type:', error);
+        console.error('Error checking auth:', error);
         setUserType(null);
         setLoading(false);
       }
     };
     
-    getUserType();
+    checkAuth();
   }, []);
 
   if (loading) {

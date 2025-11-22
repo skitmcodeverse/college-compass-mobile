@@ -12,38 +12,16 @@ interface DashboardLayoutProps {
   children?: React.ReactNode;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userType: propUserType, children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userType, children }) => {
   const isMobile = useIsMobile();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
-  const [actualUserType, setActualUserType] = useState<'student' | 'faculty' | 'admin'>(propUserType);
-  const navigate = useNavigate();
 
   // Ensure sidebar is collapsed on mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarCollapsed(true);
     }
-    
-    // Get the actual user type from localStorage to ensure consistency
-    const storedUser = localStorage.getItem('educonnect_user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        if (userData.role === 'student' || userData.role === 'faculty' || userData.role === 'admin') {
-          setActualUserType(userData.role);
-        } else {
-          // If invalid role, redirect to login
-          navigate('/login');
-        }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        navigate('/login');
-      }
-    } else {
-      // If no user data, redirect to login
-      navigate('/login');
-    }
-  }, [isMobile, navigate, propUserType]);
+  }, [isMobile]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(prev => !prev);
@@ -52,14 +30,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userType: propUserTyp
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar 
-        userType={actualUserType} 
+        userType={userType} 
         toggleSidebar={toggleSidebar}
       />
       
       <div className="flex flex-1 pt-16 relative">
         {!isMobile && (
           <Sidebar 
-            userType={actualUserType} 
+            userType={userType} 
             isCollapsed={sidebarCollapsed} 
           />
         )}
@@ -76,7 +54,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userType: propUserTyp
         </main>
       </div>
       
-      {isMobile && <MobileNavigation userType={actualUserType} />}
+      {isMobile && <MobileNavigation userType={userType} />}
     </div>
   );
 };
