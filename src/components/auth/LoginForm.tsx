@@ -33,11 +33,8 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: "Username is required" }),
+  enrollmentNumber: z.string().min(1, { message: "Enrollment number is required" }),
   password: z.string().min(1, { message: "Password is required" }),
-  userType: z.enum(["student", "faculty", "admin"], {
-    required_error: "Please select a user type",
-  }),
 });
 
 const LoginForm = () => {
@@ -47,50 +44,80 @@ const LoginForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      enrollmentNumber: "",
       password: "",
-      userType: "student",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    console.log("Login attempt:", values);
     
-    // Authentication credentials with updated requirements
-    const mockCredentials = {
-      student: { username: "student", password: "student@123" },
-      faculty: { username: "Faculty", password: "faculty@123" },
-      admin: { username: "admin", password: "admin@123" },
-    };
-    
-    // Get credentials for the selected user type
-    const userCredentials = mockCredentials[values.userType];
-    
-    // Case-insensitive username comparison, but case-sensitive password
-    const isUsernameMatch = values.username.toLowerCase() === userCredentials.username.toLowerCase();
-    const isPasswordMatch = values.password === userCredentials.password;
-    
-    // Simulate authentication delay
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Convert enrollment number to email format
+      const email = `${values.enrollmentNumber}@skitm.edu`;
       
-      if (isUsernameMatch && isPasswordMatch) {
-        // Store user info in localStorage for persistence
-        const userData = {
-          id: `mock-${values.userType}-id`,
-          username: values.username,
-          role: values.userType
-        };
-        
-        localStorage.setItem('educonnect_user', JSON.stringify(userData));
-        
-        toast.success("Login successful!");
-        navigate(`/dashboard/${values.userType}`);
-      } else {
-        toast.error("Invalid credentials. Please try again.");
+      // Sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: values.password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error("Invalid enrollment number or password");
+        } else {
+          toast.error(error.message);
+        }
+        setIsLoading(false);
+        return;
       }
-    }, 1000);
+
+      if (!data.user) {
+        toast.error("Login failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch user profile and role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        toast.error("Failed to load profile");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (roleError) {
+        console.error('Role fetch error:', roleError);
+        toast.error("Failed to load user role");
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Login successful!");
+      
+      // Navigate based on role
+      const role = roleData.role;
+      navigate(`/dashboard/${role}`);
+      
+    } catch (error) {
+      console.error('Unexpected error during login:', error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -106,37 +133,12 @@ const LoginForm = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="userType"
+              name="enrollmentNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>User Type</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="faculty">Faculty</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Enrollment Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your username" {...field} />
+                    <Input placeholder="e.g., 0875CS241053" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,9 +180,8 @@ const LoginForm = () => {
         <div className="text-xs text-center text-gray-500">
           <p>
             Test credentials:<br/>
-            Student: username: "student", password: "student@123"<br/>
-            Faculty: username: "Faculty", password: "faculty@123"<br/>
-            Admin: username: "admin", password: "admin@123"
+            Enrollment: 0875CS241001 to 0875CS251020<br/>
+            Password: skitm@123
           </p>
         </div>
       </CardFooter>

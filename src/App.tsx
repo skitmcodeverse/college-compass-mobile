@@ -3,9 +3,10 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import LoginForm from "./components/auth/LoginForm";
+import Login from "./pages/Login";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import StudentDashboard from "./components/dashboard/StudentDashboard";
 import FacultyDashboard from "./components/dashboard/FacultyDashboard";
@@ -24,45 +25,104 @@ import UserManagementPage from "./pages/users";
 import SettingsPage from "./pages/settings";
 import CreateEventPage from "./pages/events/create";
 import MorePage from "./pages/more";
-import { useState } from "react";
+import PasswordChange from "./pages/settings/PasswordChange";
+import { useState, useEffect } from "react";
+import { supabase } from '@/integrations/supabase/client';
 
 // Route guard component
 const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children: JSX.Element }) => {
-  const storedUser = localStorage.getItem('educonnect_user');
-  
-  if (!storedUser) {
+  const { user, loading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (loading) return;
+      
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      setUserRole(roleData?.role || null);
+      setChecking(false);
+    };
+
+    checkRole();
+  }, [user, loading]);
+
+  if (loading || checking) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
-  try {
-    const userData = JSON.parse(storedUser);
-    if (userTypes.includes(userData.role)) {
-      return children;
-    } else {
-      return <Navigate to={`/dashboard/${userData.role}`} replace />;
-    }
-  } catch {
-    return <Navigate to="/login" replace />;
+
+  if (userRole && userTypes.includes(userRole)) {
+    return children;
+  } else if (userRole) {
+    return <Navigate to={`/dashboard/${userRole}`} replace />;
   }
+
+  return <Navigate to="/login" replace />;
 };
 
-// Helper to get user type for dynamic layout
-const getDynamicLayout = (allowedRoles: string[], children: React.ReactNode) => {
-  const storedUser = localStorage.getItem('educonnect_user');
-  if (!storedUser) return <Navigate to="/login" replace />;
-  
-  try {
-    const userData = JSON.parse(storedUser);
-    const userType = userData.role as 'student' | 'faculty' | 'admin';
-    
+// Helper component to get user role and render layout
+const DynamicLayoutWrapper = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (loading) return;
+      
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      setUserRole(roleData?.role || null);
+      setChecking(false);
+    };
+
+    fetchRole();
+  }, [user, loading]);
+
+  if (loading || checking) {
     return (
-      <DashboardLayout userType={userType}>
-        {children}
-      </DashboardLayout>
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
+      </div>
     );
-  } catch {
+  }
+
+  if (!user || !userRole) {
     return <Navigate to="/login" replace />;
   }
+
+  return (
+    <DashboardLayout userType={userRole as 'student' | 'faculty' | 'admin'}>
+      {children}
+    </DashboardLayout>
+  );
 };
 
 const App = () => {
@@ -70,13 +130,14 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <SonnerToaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginForm />} />
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <SonnerToaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
             
             {/* Dashboard Redirect */}
             <Route path="/dashboard" element={<DashboardRedirect />} />
@@ -120,63 +181,81 @@ const App = () => {
             {/* Attendance - All roles */}
             <Route path="/attendance" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <AttendancePage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <AttendancePage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Marks - All roles */}
             <Route path="/marks" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <MarksPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <MarksPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Fees - Students and Admin only */}
             <Route path="/fees" element={
               <ProtectedRoute userTypes={["student", "admin"]}>
-                {getDynamicLayout(["student", "admin"], <FeesPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "admin"]}>
+                  <FeesPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Syllabus - All roles */}
             <Route path="/syllabus" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <SyllabusPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <SyllabusPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Bus Tracking - Students and Admin only */}
             <Route path="/bus-tracking" element={
               <ProtectedRoute userTypes={["student", "admin"]}>
-                {getDynamicLayout(["student", "admin"], <BusTrackingPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "admin"]}>
+                  <BusTrackingPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Placements - All roles */}
             <Route path="/placements" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <PlacementsPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <PlacementsPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Notifications - All roles */}
             <Route path="/notifications" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <NotificationsPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <NotificationsPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Notes - All roles */}
             <Route path="/notes" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <NotesPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <NotesPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Report Issue - All roles */}
             <Route path="/report" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <ReportIssuePage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <ReportIssuePage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
@@ -192,29 +271,45 @@ const App = () => {
             {/* Settings - All roles */}
             <Route path="/settings" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <SettingsPage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <SettingsPage />
+                </DynamicLayoutWrapper>
+              </ProtectedRoute>
+            } />
+            
+            {/* Password Change - All roles */}
+            <Route path="/settings/password" element={
+              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+                <PasswordChange />
               </ProtectedRoute>
             } />
             
             {/* Create Event - Faculty and Admin only */}
             <Route path="/events/create" element={
               <ProtectedRoute userTypes={["faculty", "admin"]}>
-                {getDynamicLayout(["faculty", "admin"], <CreateEventPage />)}
+                <DynamicLayoutWrapper allowedRoles={["faculty", "admin"]}>
+                  <CreateEventPage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* More Page - All roles */}
             <Route path="/more" element={
               <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                {getDynamicLayout(["student", "faculty", "admin"], <MorePage />)}
+                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+                  <MorePage />
+                </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

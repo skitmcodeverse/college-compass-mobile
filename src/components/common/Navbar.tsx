@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   Search, 
   Menu, 
   X, 
   User,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { toast } from 'sonner';
 
 interface NavbarProps {
   userType?: 'student' | 'faculty' | 'admin' | null;
@@ -27,11 +29,18 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Mock data for testing
-  const userName = userType ? `Test ${userType.charAt(0).toUpperCase() + userType.slice(1)}` : 'Guest';
+  const userName = userType ? `${userType.charAt(0).toUpperCase()}${userType.slice(1)}` : 'Guest';
   const notificationCount = 3;
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out successfully");
+    navigate('/login');
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 fixed w-full top-0 z-30">
@@ -115,11 +124,13 @@ const Navbar: React.FC<NavbarProps> = ({ userType, toggleSidebar }) => {
                   <div className="text-xs text-gray-500 capitalize">{userType}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="w-full cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
