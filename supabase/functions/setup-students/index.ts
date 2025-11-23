@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
             branch: student.branch,
             academic_year: student.academicYear,
             roll_number: student.rollNumber,
+            department: 'CS',
+            faculty_id: null,
           });
 
         if (profileError) {
