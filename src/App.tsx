@@ -30,7 +30,7 @@ import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
 
 // Route guard component
-const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children: JSX.Element }) => {
+const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: JSX.Element }) => {
   const { user, loading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -69,8 +69,10 @@ const ProtectedRoute = ({ userTypes, children }: { userTypes: string[], children
     return <Navigate to="/login" replace />;
   }
 
-  if (userRole && userTypes.includes(userRole)) {
+  if (userRole && allowedRoles.includes(userRole)) {
     return children;
+  } else if (userRole === 'super_admin') {
+    return <Navigate to="/users" replace />;
   } else if (userRole) {
     return <Navigate to={`/dashboard/${userRole}`} replace />;
   }
@@ -118,8 +120,12 @@ const DynamicLayoutWrapper = ({ allowedRoles, children }: { allowedRoles: string
     return <Navigate to="/login" replace />;
   }
 
+  const layoutType = userRole === 'teacher' || userRole === 'hod' ? 'faculty' : 
+                    userRole === 'super_admin' ? 'admin' : 
+                    userRole as 'student' | 'faculty' | 'admin';
+
   return (
-    <DashboardLayout userType={userRole as 'student' | 'faculty' | 'admin'}>
+    <DashboardLayout userType={layoutType}>
       {children}
     </DashboardLayout>
   );
@@ -146,7 +152,7 @@ const App = () => {
             <Route
               path="/dashboard/student"
               element={
-                <ProtectedRoute userTypes={["student"]}>
+                <ProtectedRoute allowedRoles={["student"]}>
                   <DashboardLayout userType="student">
                     <StudentDashboard />
                   </DashboardLayout>
@@ -154,11 +160,11 @@ const App = () => {
               }
             />
             
-            {/* Faculty Dashboard Routes */}
+            {/* Teacher Dashboard Routes */}
             <Route
-              path="/dashboard/faculty"
+              path="/dashboard/teacher"
               element={
-                <ProtectedRoute userTypes={["faculty"]}>
+                <ProtectedRoute allowedRoles={["teacher"]}>
                   <DashboardLayout userType="faculty">
                     <FacultyDashboard />
                   </DashboardLayout>
@@ -166,13 +172,13 @@ const App = () => {
               }
             />
             
-            {/* Admin Dashboard Routes */}
+            {/* HOD Dashboard Routes */}
             <Route
-              path="/dashboard/admin"
+              path="/dashboard/hod"
               element={
-                <ProtectedRoute userTypes={["admin"]}>
-                  <DashboardLayout userType="admin">
-                    <AdminDashboard />
+                <ProtectedRoute allowedRoles={["hod"]}>
+                  <DashboardLayout userType="faculty">
+                    <FacultyDashboard />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
@@ -180,8 +186,8 @@ const App = () => {
 
             {/* Attendance - All roles */}
             <Route path="/attendance" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <AttendancePage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -189,8 +195,8 @@ const App = () => {
             
             {/* Marks - All roles */}
             <Route path="/marks" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <MarksPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -198,8 +204,8 @@ const App = () => {
             
             {/* Fees - Students and Admin only */}
             <Route path="/fees" element={
-              <ProtectedRoute userTypes={["student", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "super_admin"]}>
                   <FeesPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -207,8 +213,8 @@ const App = () => {
             
             {/* Syllabus - All roles */}
             <Route path="/syllabus" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <SyllabusPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -216,8 +222,8 @@ const App = () => {
             
             {/* Bus Tracking - Students and Admin only */}
             <Route path="/bus-tracking" element={
-              <ProtectedRoute userTypes={["student", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "super_admin"]}>
                   <BusTrackingPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -225,8 +231,8 @@ const App = () => {
             
             {/* Placements - All roles */}
             <Route path="/placements" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <PlacementsPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -234,8 +240,8 @@ const App = () => {
             
             {/* Notifications - All roles */}
             <Route path="/notifications" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <NotificationsPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -243,8 +249,8 @@ const App = () => {
             
             {/* Notes - All roles */}
             <Route path="/notes" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <NotesPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -252,16 +258,16 @@ const App = () => {
             
             {/* Report Issue - All roles */}
             <Route path="/report" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <ReportIssuePage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
             } />
             
-            {/* User Management - Admin only */}
+            {/* User Management - Super Admin only */}
             <Route path="/users" element={
-              <ProtectedRoute userTypes={["admin"]}>
+              <ProtectedRoute allowedRoles={["super_admin"]}>
                 <DashboardLayout userType="admin">
                   <UserManagementPage />
                 </DashboardLayout>
@@ -270,8 +276,8 @@ const App = () => {
             
             {/* Settings - All roles */}
             <Route path="/settings" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <SettingsPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -279,15 +285,15 @@ const App = () => {
             
             {/* Password Change - All roles */}
             <Route path="/settings/password" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                 <PasswordChange />
               </ProtectedRoute>
             } />
             
             {/* Create Event - Faculty and Admin only */}
             <Route path="/events/create" element={
-              <ProtectedRoute userTypes={["faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["teacher", "hod", "super_admin"]}>
                   <CreateEventPage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>
@@ -295,8 +301,8 @@ const App = () => {
             
             {/* More Page - All roles */}
             <Route path="/more" element={
-              <ProtectedRoute userTypes={["student", "faculty", "admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "faculty", "admin"]}>
+              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
+                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
                   <MorePage />
                 </DynamicLayoutWrapper>
               </ProtectedRoute>

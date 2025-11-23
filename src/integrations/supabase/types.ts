@@ -19,7 +19,9 @@ export type Database = {
           academic_year: string
           branch: string
           created_at: string | null
+          department: string | null
           enrollment_number: string
+          faculty_id: string | null
           full_name: string
           id: string
           roll_number: string
@@ -29,7 +31,9 @@ export type Database = {
           academic_year: string
           branch: string
           created_at?: string | null
+          department?: string | null
           enrollment_number: string
+          faculty_id?: string | null
           full_name: string
           id: string
           roll_number: string
@@ -39,7 +43,9 @@ export type Database = {
           academic_year?: string
           branch?: string
           created_at?: string | null
+          department?: string | null
           enrollment_number?: string
+          faculty_id?: string | null
           full_name?: string
           id?: string
           roll_number?: string

@@ -110,7 +110,15 @@ const LoginForm = () => {
       
       // Navigate based on role
       const role = roleData.role;
-      navigate(`/dashboard/${role}`);
+      if (role === 'super_admin') {
+        navigate('/users');
+      } else if (role === 'hod') {
+        navigate('/dashboard/hod');
+      } else if (role === 'teacher') {
+        navigate('/dashboard/teacher');
+      } else {
+        navigate('/dashboard/student');
+      }
       
     } catch (error) {
       console.error('Unexpected error during login:', error);
@@ -180,8 +188,8 @@ const LoginForm = () => {
         <div className="text-xs text-center text-gray-500">
           <p>
             Test credentials:<br/>
-            Enrollment: 0875CS241001 to 0875CS251020<br/>
-            Password: skitm@123
+            <strong>Super Admin:</strong> sudoadmin@skitm.in / SudoAdminPassword<br/>
+            <strong>Students:</strong> 0875CS241001 to 0875CS251020 / skitm@123
           </p>
         </div>
       </CardFooter>
