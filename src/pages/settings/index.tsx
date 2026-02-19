@@ -1,6 +1,6 @@
 
 import React from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+
 import PageTitle from '@/components/common/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
 
 const SettingsPage: React.FC = () => {
   return (
-    <DashboardLayout userType="admin">
+    <>
       <PageTitle 
         title="Settings" 
         description="Configure system settings and preferences"
@@ -372,8 +372,9 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
 export default SettingsPage;
+

@@ -145,9 +145,10 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in setup-students function:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: message,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
