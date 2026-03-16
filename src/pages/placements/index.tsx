@@ -1,195 +1,131 @@
-
-import React from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import React, { useEffect, useState } from 'react';
 import PageTitle from '@/components/common/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Calendar, DollarSign, Building, ExternalLink, Search } from 'lucide-react';
+import { Briefcase, Calendar, DollarSign, Building, ExternalLink, MapPin, Search } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+
+interface Placement {
+  id: string;
+  company: string;
+  position: string;
+  job_type: string;
+  location: string | null;
+  salary_range: string | null;
+  deadline: string | null;
+  description: string | null;
+  apply_link: string | null;
+}
 
 const PlacementsPage: React.FC = () => {
-  // Mock data for now - would be connected to Supabase
-  const placementOpportunities = [
-    {
-      id: 1,
-      company: 'TechCorp Solutions',
-      position: 'Software Developer Intern',
-      type: 'Internship',
-      location: 'Bangalore',
-      salary: '₹25,000/month',
-      deadline: '2025-05-30',
-      description: 'Looking for passionate software developers with knowledge of modern web technologies.'
-    },
-    {
-      id: 2,
-      company: 'Global Systems Inc.',
-      position: 'Full Stack Developer',
-      type: 'Full-time',
-      location: 'Hyderabad',
-      salary: '₹8-12 LPA',
-      deadline: '2025-06-15',
-      description: 'Join our team to work on exciting full-stack projects using React and Node.js.'
-    },
-    {
-      id: 3,
-      company: 'CloudNet Technologies',
-      position: 'DevOps Engineer',
-      type: 'Full-time',
-      location: 'Remote',
-      salary: '₹10-15 LPA',
-      deadline: '2025-06-10',
-      description: 'Seeking DevOps engineers familiar with AWS, Docker, and CI/CD pipelines.'
-    },
-    {
-      id: 4,
-      company: 'DataViz Analytics',
-      position: 'Data Analyst',
-      type: 'Full-time',
-      location: 'Chennai',
-      salary: '₹7-10 LPA',
-      deadline: '2025-06-05',
-      description: 'Join our data team to extract meaningful insights from large datasets.'
-    },
-  ];
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
-  const stats = {
-    totalCompanies: 45,
-    averagePackage: '8.5 LPA',
-    highestPackage: '24 LPA',
-    placedStudents: '87%'
-  };
+  useEffect(() => {
+    const fetchPlacements = async () => {
+      const { data, error } = await supabase
+        .from('placements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (!error && data) setPlacements(data);
+      setLoading(false);
+    };
+    fetchPlacements();
+  }, []);
+
+  const filtered = placements.filter(p =>
+    p.company.toLowerCase().includes(search.toLowerCase()) ||
+    p.position.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <DashboardLayout userType="student">
-      <PageTitle 
-        title="Placements" 
-        description="Explore internship and job opportunities"
-      />
-      
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search opportunities..."
-              className="w-full pl-9 py-2 px-4 border rounded-md"
-            />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Filter</Button>
-          <Button variant="outline">Sort</Button>
+    <>
+      <PageTitle title="Placements" description="Explore internship and job opportunities" />
+
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            className="pl-9"
+            placeholder="Search by company or position..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading opportunities...</div>
+      ) : filtered.length === 0 ? (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCompanies}</div>
+          <CardContent className="text-center py-12">
+            <Briefcase className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-muted-foreground">
+              {placements.length === 0
+                ? 'No placement opportunities posted yet. Check back soon!'
+                : 'No results match your search.'}
+            </p>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Package</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{stats.averagePackage}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Highest Package</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{stats.highestPackage}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Students Placed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.placedStudents}</div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold">Latest Opportunities</h2>
-        
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {placementOpportunities.map((opportunity) => (
-            <Card key={opportunity.id} className="overflow-hidden">
+          {filtered.map((opp) => (
+            <Card key={opp.id} className="overflow-hidden">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle>{opportunity.position}</CardTitle>
+                    <CardTitle>{opp.position}</CardTitle>
                     <CardDescription className="flex items-center mt-1">
-                      <Building className="h-4 w-4 mr-1" />
-                      {opportunity.company}
+                      <Building className="h-4 w-4 mr-1" /> {opp.company}
                     </CardDescription>
                   </div>
                   <span className="bg-college-primary/10 text-college-primary text-xs font-medium px-2.5 py-0.5 rounded">
-                    {opportunity.type}
+                    {opp.job_type}
                   </span>
                 </div>
               </CardHeader>
               <CardContent className="pb-4">
-                <p className="text-sm text-gray-600 mb-4">{opportunity.description}</p>
-                
+                {opp.description && (
+                  <p className="text-sm text-muted-foreground mb-4">{opp.description}</p>
+                )}
                 <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                    <span>{opportunity.location}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <DollarSign className="h-4 w-4 mr-1 flex-shrink-0" />
-                    <span>{opportunity.salary}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
-                    <span>Apply by: {new Date(opportunity.deadline).toLocaleDateString()}</span>
-                  </div>
+                  {opp.location && (
+                    <div className="flex items-center text-muted-foreground">
+                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>{opp.location}</span>
+                    </div>
+                  )}
+                  {opp.salary_range && (
+                    <div className="flex items-center text-muted-foreground">
+                      <DollarSign className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>{opp.salary_range}</span>
+                    </div>
+                  )}
+                  {opp.deadline && (
+                    <div className="flex items-center text-muted-foreground col-span-2">
+                      <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>Apply by: {new Date(opp.deadline).toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="flex justify-end">
-                  <Button>
-                    Apply Now <ExternalLink className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
+                {opp.apply_link && (
+                  <div className="flex justify-end">
+                    <Button asChild>
+                      <a href={opp.apply_link} target="_blank" rel="noopener noreferrer">
+                        Apply Now <ExternalLink className="h-4 w-4 ml-2" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
-      </div>
-    </DashboardLayout>
-  );
-};
-
-// Add this to avoid MapPin missing error
-const MapPin = ({ className }: { className?: string }) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
+      )}
+    </>
   );
 };
 
