@@ -27,297 +27,532 @@ import CreateEventPage from "./pages/events/create";
 import MorePage from "./pages/more";
 import PasswordChange from "./pages/settings/PasswordChange";
 import { useState, useEffect } from "react";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 // Route guard component
-const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: JSX.Element }) => {
-  const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
+const ProtectedRoute = ({
+    allowedRoles,
+    children,
+}: {
+    allowedRoles: string[];
+    children: JSX.Element;
+}) => {
+    const { user, loading } = useAuth();
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
-    const checkRole = async () => {
-      if (loading) return;
-      
-      if (!user) {
-        setChecking(false);
-        return;
-      }
+    useEffect(() => {
+        const checkRole = async () => {
+            if (loading) return;
 
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+            if (!user) {
+                setChecking(false);
+                return;
+            }
 
-      setUserRole(roleData?.role || null);
-      setChecking(false);
-    };
+            const { data: roleData } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", user.id)
+                .single();
 
-    checkRole();
-  }, [user, loading]);
+            setUserRole(roleData?.role || null);
+            setChecking(false);
+        };
 
-  if (loading || checking) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
-      </div>
-    );
-  }
+        checkRole();
+    }, [user, loading]);
 
-  if (!user) {
+    if (loading || checking) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (userRole && allowedRoles.includes(userRole)) {
+        return children;
+    } else if (userRole === "super_admin") {
+        return <Navigate to="/dashboard/admin" replace />;
+    } else if (userRole) {
+        return <Navigate to={`/dashboard/${userRole}`} replace />;
+    }
+
     return <Navigate to="/login" replace />;
-  }
-
-  if (userRole && allowedRoles.includes(userRole)) {
-    return children;
-  } else if (userRole === 'super_admin') {
-    return <Navigate to="/users" replace />;
-  } else if (userRole) {
-    return <Navigate to={`/dashboard/${userRole}`} replace />;
-  }
-
-  return <Navigate to="/login" replace />;
 };
 
 // Helper component to get user role and render layout
-const DynamicLayoutWrapper = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
+const DynamicLayoutWrapper = ({
+    allowedRoles,
+    children,
+}: {
+    allowedRoles: string[];
+    children: React.ReactNode;
+}) => {
+    const { user, loading } = useAuth();
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
-    const fetchRole = async () => {
-      if (loading) return;
-      
-      if (!user) {
-        setChecking(false);
-        return;
-      }
+    useEffect(() => {
+        const fetchRole = async () => {
+            if (loading) return;
 
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+            if (!user) {
+                setChecking(false);
+                return;
+            }
 
-      setUserRole(roleData?.role || null);
-      setChecking(false);
-    };
+            const { data: roleData } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", user.id)
+                .single();
 
-    fetchRole();
-  }, [user, loading]);
+            setUserRole(roleData?.role || null);
+            setChecking(false);
+        };
 
-  if (loading || checking) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
-      </div>
-    );
-  }
+        fetchRole();
+    }, [user, loading]);
 
-  if (!user || !userRole) {
-    return <Navigate to="/login" replace />;
-  }
+    if (loading || checking) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-college-primary"></div>
+            </div>
+        );
+    }
 
-  const layoutType = userRole === 'teacher' || userRole === 'hod' ? 'faculty' : 
-                    userRole === 'super_admin' ? 'admin' : 
-                    userRole as 'student' | 'faculty' | 'admin';
+    if (!user || !userRole) {
+        return <Navigate to="/login" replace />;
+    }
 
-  return (
-    <DashboardLayout userType={layoutType}>
-      {children}
-    </DashboardLayout>
-  );
+    const layoutType =
+        userRole === "teacher" || userRole === "hod"
+            ? "faculty"
+            : userRole === "super_admin"
+              ? "admin"
+              : (userRole as "student" | "faculty" | "admin");
+
+    return <DashboardLayout userType={layoutType}>{children}</DashboardLayout>;
 };
 
 const App = () => {
-  const [queryClient] = useState(() => new QueryClient());
+    const [queryClient] = useState(() => new QueryClient());
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <SonnerToaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-            
-            {/* Dashboard Redirect */}
-            <Route path="/dashboard" element={<DashboardRedirect />} />
-            
-            {/* Student Dashboard Routes */}
-            <Route
-              path="/dashboard/student"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <DashboardLayout userType="student">
-                    <StudentDashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Teacher Dashboard Routes */}
-            <Route
-              path="/dashboard/teacher"
-              element={
-                <ProtectedRoute allowedRoles={["teacher"]}>
-                  <DashboardLayout userType="faculty">
-                    <FacultyDashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* HOD Dashboard Routes */}
-            <Route
-              path="/dashboard/hod"
-              element={
-                <ProtectedRoute allowedRoles={["hod"]}>
-                  <DashboardLayout userType="faculty">
-                    <FacultyDashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <TooltipProvider>
+                    <Toaster />
+                    <SonnerToaster />
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/login" element={<Login />} />
 
-            {/* Attendance - All roles */}
-            <Route path="/attendance" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <AttendancePage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Marks - All roles */}
-            <Route path="/marks" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <MarksPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Fees - Students and Admin only */}
-            <Route path="/fees" element={
-              <ProtectedRoute allowedRoles={["student", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "super_admin"]}>
-                  <FeesPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Syllabus - All roles */}
-            <Route path="/syllabus" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <SyllabusPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Bus Tracking - Students and Admin only */}
-            <Route path="/bus-tracking" element={
-              <ProtectedRoute allowedRoles={["student", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "super_admin"]}>
-                  <BusTrackingPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Placements - All roles */}
-            <Route path="/placements" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <PlacementsPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Notifications - All roles */}
-            <Route path="/notifications" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <NotificationsPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Notes - All roles */}
-            <Route path="/notes" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <NotesPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Report Issue - All roles */}
-            <Route path="/report" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <ReportIssuePage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* User Management - Super Admin only */}
-            <Route path="/users" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <DashboardLayout userType="admin">
-                  <UserManagementPage />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            
-            {/* Settings - All roles */}
-            <Route path="/settings" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <SettingsPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Password Change - All roles */}
-            <Route path="/settings/password" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <PasswordChange />
-              </ProtectedRoute>
-            } />
-            
-            {/* Create Event - Faculty and Admin only */}
-            <Route path="/events/create" element={
-              <ProtectedRoute allowedRoles={["teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["teacher", "hod", "super_admin"]}>
-                  <CreateEventPage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* More Page - All roles */}
-            <Route path="/more" element={
-              <ProtectedRoute allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                <DynamicLayoutWrapper allowedRoles={["student", "teacher", "hod", "super_admin"]}>
-                  <MorePage />
-                </DynamicLayoutWrapper>
-              </ProtectedRoute>
-            } />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
+                            {/* Dashboard Redirect */}
+                            <Route
+                                path="/dashboard"
+                                element={<DashboardRedirect />}
+                            />
+
+                            {/* Student Dashboard Routes */}
+                            <Route
+                                path="/dashboard/student"
+                                element={
+                                    <ProtectedRoute allowedRoles={["student"]}>
+                                        <DashboardLayout userType="student">
+                                            <StudentDashboard />
+                                        </DashboardLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Teacher Dashboard Routes */}
+                            <Route
+                                path="/dashboard/teacher"
+                                element={
+                                    <ProtectedRoute allowedRoles={["teacher"]}>
+                                        <DashboardLayout userType="faculty">
+                                            <FacultyDashboard />
+                                        </DashboardLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* HOD Dashboard Routes */}
+                            <Route
+                                path="/dashboard/hod"
+                                element={
+                                    <ProtectedRoute allowedRoles={["hod"]}>
+                                        <DashboardLayout userType="faculty">
+                                            <FacultyDashboard />
+                                        </DashboardLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Super Admin Dashboard Routes */}
+                            <Route
+                                path="/dashboard/admin"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={["super_admin"]}
+                                    >
+                                        <DashboardLayout userType="admin">
+                                            <AdminDashboard />
+                                        </DashboardLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Attendance - All roles */}
+                            <Route
+                                path="/attendance"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <AttendancePage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Marks - All roles */}
+                            <Route
+                                path="/marks"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <MarksPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Fees - Students and Admin only */}
+                            <Route
+                                path="/fees"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <FeesPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Syllabus - All roles */}
+                            <Route
+                                path="/syllabus"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <SyllabusPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Bus Tracking - Students and Admin only */}
+                            <Route
+                                path="/bus-tracking"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <BusTrackingPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Placements - All roles */}
+                            <Route
+                                path="/placements"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <PlacementsPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Notifications - All roles */}
+                            <Route
+                                path="/notifications"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <NotificationsPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Notes - All roles */}
+                            <Route
+                                path="/notes"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <NotesPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Report Issue - All roles */}
+                            <Route
+                                path="/report"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <ReportIssuePage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* User Management - Super Admin only */}
+                            <Route
+                                path="/users"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={["super_admin"]}
+                                    >
+                                        <DashboardLayout userType="admin">
+                                            <UserManagementPage />
+                                        </DashboardLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Settings - All roles */}
+                            <Route
+                                path="/settings"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <SettingsPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Password Change - All roles */}
+                            <Route
+                                path="/settings/password"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <PasswordChange />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Create Event - Faculty and Admin only */}
+                            <Route
+                                path="/events/create"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <CreateEventPage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* More Page - All roles */}
+                            <Route
+                                path="/more"
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={[
+                                            "student",
+                                            "teacher",
+                                            "hod",
+                                            "super_admin",
+                                        ]}
+                                    >
+                                        <DynamicLayoutWrapper
+                                            allowedRoles={[
+                                                "student",
+                                                "teacher",
+                                                "hod",
+                                                "super_admin",
+                                            ]}
+                                        >
+                                            <MorePage />
+                                        </DynamicLayoutWrapper>
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Catch-all route */}
+                            <Route path="*" element={<NotFound />} />
+                        </Routes>
+                    </BrowserRouter>
+                </TooltipProvider>
+            </AuthProvider>
+        </QueryClientProvider>
+    );
 };
 
 export default App;
